@@ -15,12 +15,12 @@ import (
 	"github.com/prebid/prebid-server/openrtb_ext"
 )
 
-type adkernelAdapter struct {
+type adapter struct {
 	EndpointTemplate *template.Template
 }
 
 // MakeRequests prepares request information for prebid-server core
-func (adapter *adkernelAdapter) MakeRequests(request *openrtb2.BidRequest, reqInfo *adapters.ExtraRequestInfo) ([]*adapters.RequestData, []error) {
+func (adapter *adapter) MakeRequests(request *openrtb2.BidRequest, reqInfo *adapters.ExtraRequestInfo) ([]*adapters.RequestData, []error) {
 	errs := make([]error, 0, len(request.Imp))
 	if len(request.Imp) == 0 {
 		errs = append(errs, newBadInputError("No impression in the bid request"))
@@ -156,7 +156,7 @@ func getImpressionExt(imp *openrtb2.Imp) (*openrtb_ext.ExtImpAdkernel, error) {
 	return &adkernelExt, nil
 }
 
-func (adapter *adkernelAdapter) buildAdapterRequest(prebidBidRequest *openrtb2.BidRequest, params *openrtb_ext.ExtImpAdkernel, imps []openrtb2.Imp) (*adapters.RequestData, error) {
+func (adapter *adapter) buildAdapterRequest(prebidBidRequest *openrtb2.BidRequest, params *openrtb_ext.ExtImpAdkernel, imps []openrtb2.Imp) (*adapters.RequestData, error) {
 	newBidRequest := createBidRequest(prebidBidRequest, params, imps)
 	reqJSON, err := json.Marshal(newBidRequest)
 	if err != nil {
@@ -199,13 +199,13 @@ func createBidRequest(prebidBidRequest *openrtb2.BidRequest, params *openrtb_ext
 }
 
 // Builds endpoint url based on adapter-specific pub settings from imp.ext
-func (adapter *adkernelAdapter) buildEndpointURL(params *openrtb_ext.ExtImpAdkernel) (string, error) {
+func (adapter *adapter) buildEndpointURL(params *openrtb_ext.ExtImpAdkernel) (string, error) {
 	endpointParams := macros.EndpointTemplateParams{ZoneID: strconv.Itoa(params.ZoneId)}
 	return macros.ResolveMacros(adapter.EndpointTemplate, endpointParams)
 }
 
 // MakeBids translates adkernel bid response to prebid-server specific format
-func (adapter *adkernelAdapter) MakeBids(internalRequest *openrtb2.BidRequest, externalRequest *adapters.RequestData, response *adapters.ResponseData) (*adapters.BidderResponse, []error) {
+func (adapter *adapter) MakeBids(internalRequest *openrtb2.BidRequest, externalRequest *adapters.RequestData, response *adapters.ResponseData) (*adapters.BidderResponse, []error) {
 	if response.StatusCode == http.StatusNoContent {
 		return nil, nil
 	}
@@ -268,7 +268,7 @@ func Builder(bidderName openrtb_ext.BidderName, config config.Adapter, server co
 		return nil, fmt.Errorf("unable to parse endpoint url template: %v", err)
 	}
 
-	bidder := &adkernelAdapter{
+	bidder := &adapter{
 		EndpointTemplate: urlTemplate,
 	}
 	return bidder, nil
